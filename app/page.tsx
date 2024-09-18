@@ -2,7 +2,6 @@ import Link from "next/link"
 import { Users, Calendar, BarChart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import Navbar from "@/components/shared/navbar"
 
 export default function HomePage() {
   return (
