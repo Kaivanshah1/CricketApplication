@@ -16,18 +16,18 @@ const Navbar = async () => {
         <Link className="text-sm font-medium hover:underline underline-offset-4" href="/about">
           Contact
         </Link>
-        {!session ? (
+        {/* {!session ? ( */}
           <Link href="/signin">
             <Button variant="default" size="sm">Sign in</Button>
           </Link>
-        ) : (
-          <form action={async () => {
-            'use server'
-            await signOut();
-          }}>
-            <Button variant="default" size="sm" type="submit">Sign out</Button>
-          </form>
-        )}
+        {/* // ) : ( 
+        //   <form action={async () => {
+        //     'use server'
+        //     await signOut();
+        //   }}>
+        //     <Button variant="default" size="sm" type="submit">Sign out</Button>
+        //   </form>
+        // )*/} 
       </nav>
     </header>
   )
