@@ -29,7 +29,7 @@ export default function HomePage() {
           </div>
         </section>
         <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-          <div className="container px-4 md:px-6" id="features">
+          <div className="container px-4 md:px-6" id="features">  
             <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12 text-center">
               <div className="flex flex-col items-center space-y-3">
                 <Users className="h-12 w-12" />

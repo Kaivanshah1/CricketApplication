@@ -37,12 +37,15 @@ const teamsSlice = createSlice({
     addPlayer: (state, action: PayloadAction<{ teamId: string, player: Player }>) => {
       const team = state.teams.find(t => t.id === action.payload.teamId)
       if (team) {
-        if (action.payload.player.isCaptain) {
-          team.players.forEach(p => p.isCaptain = false)
+        const hasCaptain = team.players.some(p => p.isCaptain)
+        const hasViceCaptain = team.players.some(p => p.isViceCaptain)
+        
+        if ((action.payload.player.isCaptain && hasCaptain) || 
+            (action.payload.player.isViceCaptain && hasViceCaptain)) {
+          // If trying to add a captain/vice-captain when one already exists, don't add the player
+          return
         }
-        if (action.payload.player.isViceCaptain) {
-          team.players.forEach(p => p.isViceCaptain = false)
-        }
+        
         team.players.push(action.payload.player)
       }
     },
@@ -57,12 +60,15 @@ const teamsSlice = createSlice({
       if (team) {
         const index = team.players.findIndex(p => p.id === action.payload.player.id)
         if (index !== -1) {
-          if (action.payload.player.isCaptain) {
-            team.players.forEach(p => p.isCaptain = false)
+          const hasCaptain = team.players.some(p => p.isCaptain && p.id !== action.payload.player.id)
+          const hasViceCaptain = team.players.some(p => p.isViceCaptain && p.id !== action.payload.player.id)
+          
+          if ((action.payload.player.isCaptain && hasCaptain) || 
+              (action.payload.player.isViceCaptain && hasViceCaptain)) {
+            // If trying to update to captain/vice-captain when one already exists, don't update
+            return
           }
-          if (action.payload.player.isViceCaptain) {
-            team.players.forEach(p => p.isViceCaptain = false)
-          }
+          
           team.players[index] = action.payload.player
         }
       }
