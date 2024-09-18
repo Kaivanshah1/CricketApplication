@@ -21,18 +21,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
 import { PlusCircle, Edit, Trash2 } from 'lucide-react'
+import { PlayerFormComponent, PlayerFormData } from '@/components/shared/player-form-component'
 
-type Player = {
-  id: string;
-  name: string;
-  role: 'Batsman' | 'Bowler' | 'All Rounder' | 'WK';
-  isCaptain: boolean;
-  isViceCaptain: boolean;
-}
+type Player = PlayerFormData & { id: string }
 
 export default function TeamPage() {
   const { id } = useParams()
@@ -42,13 +34,6 @@ export default function TeamPage() {
   const dispatch = useDispatch()
 
   const [filter, setFilter] = useState('all')
-  const [newPlayer, setNewPlayer] = useState<Player>({
-    id: '',
-    name: '',
-    role: 'Batsman',
-    isCaptain: false,
-    isViceCaptain: false
-  })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null)
 
@@ -68,25 +53,20 @@ export default function TeamPage() {
     filter === 'all' ? true : player.role === filter
   )
 
-  const handleAddPlayer = () => {
-    if (newPlayer.name) {
-      dispatch(addPlayer({
-        teamId: team.id,
-        player: { ...newPlayer, id: Date.now().toString() }
-      }))
-      setNewPlayer({ id: '', name: '', role: 'Batsman', isCaptain: false, isViceCaptain: false })
-      setIsDialogOpen(false)
-    }
-  }
-
-  const handleUpdatePlayer = () => {
+  const handleSubmit = (data: PlayerFormData) => {
     if (editingPlayer) {
       dispatch(updatePlayer({
         teamId: team.id,
-        player: editingPlayer
+        player: { ...data, id: editingPlayer.id }
       }))
       setEditingPlayer(null)
+    } else {
+      dispatch(addPlayer({
+        teamId: team.id,
+        player: { ...data, id: Date.now().toString() }
+      }))
     }
+    setIsDialogOpen(false)
   }
 
   return (
@@ -113,71 +93,14 @@ export default function TeamPage() {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add New Player</DialogTitle>
+              <DialogTitle>{editingPlayer ? 'Edit Player' : 'Add New Player'}</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  value={newPlayer.name}
-                  onChange={(e) => setNewPlayer({ ...newPlayer, name: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">
-                  Role
-                </Label>
-                <Select
-                  onValueChange={(value) => setNewPlayer({ ...newPlayer, role: value as any })}
-                  value={newPlayer.role}
-                >
-                  <SelectTrigger className="w-full col-span-3">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Batsman">Batsman</SelectItem>
-                    <SelectItem value="Bowler">Bowler</SelectItem>
-                    <SelectItem value="All Rounder">All Rounder</SelectItem>
-                    <SelectItem value="WK">Wicket Keeper</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  id="isCaptain"
-                  checked={newPlayer.isCaptain}
-                  onCheckedChange={(checked) => {
-                    if (checked && !hasCaptain) {
-                      setNewPlayer({ ...newPlayer, isCaptain: true, isViceCaptain: false })
-                    } else {
-                      setNewPlayer({ ...newPlayer, isCaptain: false })
-                    }
-                  }}
-                  disabled={hasCaptain}
-                />
-                <Label htmlFor="isCaptain">Captain</Label>
-              </div>
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  id="isViceCaptain"
-                  checked={newPlayer.isViceCaptain}
-                  onCheckedChange={(checked) => {
-                    if (checked && !hasViceCaptain) {
-                      setNewPlayer({ ...newPlayer, isViceCaptain: true, isCaptain: false })
-                    } else {
-                      setNewPlayer({ ...newPlayer, isViceCaptain: false })
-                    }
-                  }}
-                  disabled={hasViceCaptain}
-                />
-                <Label htmlFor="isViceCaptain">Vice-Captain</Label>
-              </div>
-            </div>
-            <Button onClick={handleAddPlayer} className="w-full">Add Player</Button>
+            <PlayerFormComponent
+              onSubmit={handleSubmit}
+              initialData={editingPlayer || undefined}
+              hasCaptain={hasCaptain}
+              hasViceCaptain={hasViceCaptain}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -206,7 +129,10 @@ export default function TeamPage() {
             <CardFooter className="flex justify-between">
               <Button 
                 variant="outline" 
-                onClick={() => setEditingPlayer(player)}
+                onClick={() => {
+                  setEditingPlayer(player)
+                  setIsDialogOpen(true)
+                }}
                 className="flex-1 mr-2"
               >
                 <Edit className="mr-2 h-4 w-4" /> Edit
@@ -224,78 +150,6 @@ export default function TeamPage() {
           </Card>
         ))}
       </div>
-      {editingPlayer && (
-        <Dialog open={!!editingPlayer} onOpenChange={() => setEditingPlayer(null)}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Edit Player</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="edit-name"
-                  value={editingPlayer.name}
-                  onChange={(e) => setEditingPlayer({ ...editingPlayer, name: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="edit-role" className="text-right">
-                  Role
-                </Label>
-                <Select
-                  onValueChange={(value) => setEditingPlayer({ ...editingPlayer, role: value as any })}
-                  value={editingPlayer.role}
-                >
-                  <SelectTrigger className="w-full col-span-3">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Batsman">Batsman</SelectItem>
-                    <SelectItem value="Bowler">Bowler</SelectItem>
-                    <SelectItem value="All Rounder">All Rounder</SelectItem>
-                    <SelectItem value="WK">Wicket Keeper</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  id="edit-isCaptain"
-                  checked={editingPlayer.isCaptain}
-                  onCheckedChange={(checked) => {
-                    if (checked && (!hasCaptain || editingPlayer.isCaptain)) {
-                      setEditingPlayer({ ...editingPlayer, isCaptain: true, isViceCaptain: false })
-                    } else {
-                      setEditingPlayer({ ...editingPlayer, isCaptain: false })
-                    }
-                  }}
-                  disabled={hasCaptain && !editingPlayer.isCaptain}
-                />
-                <Label htmlFor="edit-isCaptain">Captain</Label>
-              </div>
-              <div className="flex items-center gap-4">
-                <Checkbox
-                  id="edit-isViceCaptain"
-                  checked={editingPlayer.isViceCaptain}
-                  onCheckedChange={(checked) => {
-                    if (checked && (!hasViceCaptain || editingPlayer.isViceCaptain)) {
-                      setEditingPlayer({ ...editingPlayer, isViceCaptain: true, isCaptain: false })
-                    } else {
-                      setEditingPlayer({ ...editingPlayer, isViceCaptain: false })
-                    }
-                  }}
-                  disabled={hasViceCaptain && !editingPlayer.isViceCaptain}
-                />
-                <Label htmlFor="edit-isViceCaptain">Vice-Captain</Label>
-              </div>
-            </div>
-            <Button onClick={handleUpdatePlayer} className="w-full">Update Player</Button>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   )
 }
